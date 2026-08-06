@@ -5,6 +5,7 @@
   assign mobile_image = section.settings.mobile_image | default: desktop_image
   assign image_alt = section.settings.image_alt | strip
 
+  assign description_text = section.settings.description | strip_html | strip
   assign header_cta_link = section.settings.header_cta_link
   assign primary_cta_link = section.settings.primary_cta_link
 
@@ -17,14 +18,38 @@
   endif
 -%}
 
-<section
+<div
   id="ee-test-gift-banner-{{ section.id }}"
-  class="ee-test-gift-banner"
+  class="
+    ee-test-gift-banner
+    ee-test-gift-banner--horizontal-{{ section.settings.desktop_content_horizontal }}
+    ee-test-gift-banner--vertical-{{ section.settings.desktop_content_vertical }}
+    ee-test-gift-banner--text-{{ section.settings.desktop_text_alignment }}
+    {% if section.settings.announcement_uppercase %}
+      ee-test-gift-banner--announcement-uppercase
+    {% endif %}
+  "
   style="
     --ee-test-banner-desktop-height: {{ section.settings.desktop_min_height }}px;
     --ee-test-banner-mobile-height: {{ section.settings.mobile_min_height }}px;
     --ee-test-banner-content-width: {{ section.settings.content_max_width }}px;
-    --ee-test-banner-mobile-image-position: {{ section.settings.mobile_image_position }}%;
+
+    --ee-test-banner-desktop-image-x: {{ section.settings.desktop_image_position_x }}%;
+    --ee-test-banner-desktop-image-y: {{ section.settings.desktop_image_position_y }}%;
+
+    --ee-test-banner-mobile-image-height: {{ section.settings.mobile_image_height }}px;
+    --ee-test-banner-mobile-image-x: {{ section.settings.mobile_image_position_x }}%;
+    --ee-test-banner-mobile-image-y: {{ section.settings.mobile_image_position_y }}%;
+
+    --ee-test-banner-header-button-width: {{ section.settings.header_button_width }}px;
+    --ee-test-banner-primary-button-width: {{ section.settings.primary_button_width }}px;
+    --ee-test-banner-mobile-button-width: {{ section.settings.mobile_button_width }}px;
+    --ee-test-banner-mobile-button-bottom: {{ section.settings.mobile_button_bottom }}px;
+
+    --ee-test-banner-announcement-bg: {{ section.settings.announcement_background }};
+    --ee-test-banner-announcement-color: {{ section.settings.announcement_text_color }};
+    --ee-test-banner-announcement-size: {{ section.settings.announcement_font_size }}px;
+    --ee-test-banner-announcement-padding: {{ section.settings.announcement_vertical_padding }}px;
   "
 >
   <header class="ee-test-gift-banner__header">
@@ -40,13 +65,13 @@
 
       {%- if section.settings.logo_text != blank -%}
         <div class="ee-test-gift-banner__logo">
-          {{ section.settings.logo_text | escape }}
+          {{ section.settings.logo_text | strip_html | escape }}
         </div>
       {%- endif -%}
 
       {%- if section.settings.header_tagline != blank -%}
         <p class="ee-test-gift-banner__tagline">
-          {{ section.settings.header_tagline | escape }}
+          {{ section.settings.header_tagline | strip_html | escape }}
         </p>
       {%- endif -%}
 
@@ -55,7 +80,9 @@
           class="ee-test-gift-banner__header-cta"
           href="{{ header_cta_link }}"
         >
-          <span>{{ section.settings.header_cta_label | escape }}</span>
+          <span class="ee-test-gift-banner__button-label">
+            {{ section.settings.header_cta_label | strip_html | escape }}
+          </span>
 
           <svg
             class="ee-test-gift-banner__arrow"
@@ -81,54 +108,13 @@
   </header>
 
   <div class="ee-test-gift-banner__hero">
-    <div class="ee-test-gift-banner__content">
-      {%- if section.settings.main_heading != blank -%}
-        <h1 class="ee-test-gift-banner__heading">
-          {{ section.settings.main_heading | escape }}
-        </h1>
-      {%- endif -%}
-
-      {%- if section.settings.description != blank -%}
-        <div class="ee-test-gift-banner__description">
-          {{ section.settings.description | escape | newline_to_br }}
-        </div>
-      {%- endif -%}
-
-      {%- if section.settings.primary_cta_label != blank -%}
-        <a
-          class="ee-test-gift-banner__primary-cta"
-          href="{{ primary_cta_link }}"
-        >
-          <span>{{ section.settings.primary_cta_label | escape }}</span>
-
-          <svg
-            class="ee-test-gift-banner__arrow"
-            width="22"
-            height="12"
-            viewBox="0 0 22 12"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <path
-              d="M1 6H20M15 1L20 6L15 11"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </a>
-      {%- endif -%}
-    </div>
-
     {%- if desktop_image != blank -%}
       <picture class="ee-test-gift-banner__media">
         {%- if mobile_image != blank -%}
           <source
             media="(max-width: 749px)"
             srcset="
+              {{ mobile_image | image_url: width: 320 }} 320w,
               {{ mobile_image | image_url: width: 375 }} 375w,
               {{ mobile_image | image_url: width: 550 }} 550w,
               {{ mobile_image | image_url: width: 750 }} 750w,
@@ -160,14 +146,60 @@
         <span class="ee-test-gift-banner__fallback-line"></span>
       </div>
     {%- endif -%}
+
+    <div class="ee-test-gift-banner__content">
+      {%- if section.settings.main_heading != blank -%}
+        <h1 class="ee-test-gift-banner__heading">
+          {{ section.settings.main_heading | strip_html | escape }}
+        </h1>
+      {%- endif -%}
+
+      {%- if description_text != blank -%}
+        <p class="ee-test-gift-banner__description">
+          {{ description_text | escape | newline_to_br }}
+        </p>
+      {%- endif -%}
+
+      {%- if section.settings.primary_cta_label != blank -%}
+        <a
+          class="ee-test-gift-banner__primary-cta"
+          href="{{ primary_cta_link }}"
+        >
+          <span class="ee-test-gift-banner__button-label">
+            {{ section.settings.primary_cta_label | strip_html | escape }}
+          </span>
+
+          <svg
+            class="ee-test-gift-banner__arrow"
+            width="22"
+            height="12"
+            viewBox="0 0 22 12"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M1 6H20M15 1L20 6L15 11"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </a>
+      {%- endif -%}
+    </div>
   </div>
 
-  {%- if section.settings.announcement_text != blank -%}
+  {%- if section.settings.show_announcement and section.settings.announcement_text != blank -%}
     <div class="ee-test-gift-banner__announcement">
-      <p>{{ section.settings.announcement_text | escape }}</p>
+      <p>
+        {{ section.settings.announcement_text | strip_html | escape }}
+      </p>
     </div>
   {%- endif -%}
-</section>
+</div>
 
 {% schema %}
 {
@@ -203,6 +235,16 @@
       "label": "Header CTA link"
     },
     {
+      "type": "range",
+      "id": "header_button_width",
+      "min": 140,
+      "max": 260,
+      "step": 5,
+      "unit": "px",
+      "label": "Header button width",
+      "default": 175
+    },
+    {
       "type": "header",
       "content": "Gift guide content"
     },
@@ -216,7 +258,8 @@
       "type": "textarea",
       "id": "description",
       "label": "Description",
-      "default": "Discover Joy: Your Ultimate Holiday Gift Destination. Explore our curated selection and find the perfect gifts to delight your loved ones this holiday season."
+      "default": "Discover Joy: Your Ultimate Holiday Gift Destination. Explore our curated selection and find the perfect gifts to delight your loved ones this holiday season.",
+      "info": "The same description is displayed on desktop and mobile."
     },
     {
       "type": "text",
@@ -230,10 +273,34 @@
       "label": "Primary CTA link"
     },
     {
-      "type": "text",
-      "id": "announcement_text",
-      "label": "Announcement text",
-      "default": "SUSTAINABLE, ETHICALLY MADE CLOTHES IN SIZES XXS TO 6XL"
+      "type": "range",
+      "id": "primary_button_width",
+      "min": 150,
+      "max": 320,
+      "step": 5,
+      "unit": "px",
+      "label": "Desktop primary button width",
+      "default": 220
+    },
+    {
+      "type": "range",
+      "id": "mobile_button_width",
+      "min": 160,
+      "max": 300,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile primary button width",
+      "default": 200
+    },
+    {
+      "type": "range",
+      "id": "mobile_button_bottom",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile button distance from image bottom",
+      "default": 40
     },
     {
       "type": "header",
@@ -248,17 +315,37 @@
       "type": "image_picker",
       "id": "mobile_image",
       "label": "Mobile image",
-      "info": "Use the cropped line-art image for the mobile layout. The desktop image is used when this is empty."
+      "info": "The desktop image is used when no mobile image is selected."
     },
     {
       "type": "text",
       "id": "image_alt",
       "label": "Image alternative text",
-      "info": "Leave blank when the image is decorative."
+      "info": "Leave blank when the artwork is decorative."
     },
     {
       "type": "range",
-      "id": "mobile_image_position",
+      "id": "desktop_image_position_x",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Desktop image horizontal position",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "desktop_image_position_y",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Desktop image vertical position",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "mobile_image_position_x",
       "min": 0,
       "max": 100,
       "step": 5,
@@ -267,14 +354,94 @@
       "default": 50
     },
     {
+      "type": "range",
+      "id": "mobile_image_position_y",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Mobile image vertical position",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "mobile_image_height",
+      "min": 220,
+      "max": 500,
+      "step": 10,
+      "unit": "px",
+      "label": "Mobile image height",
+      "default": 280
+    },
+    {
       "type": "header",
-      "content": "Layout"
+      "content": "Desktop layout"
+    },
+    {
+      "type": "select",
+      "id": "desktop_content_horizontal",
+      "label": "Content horizontal position",
+      "default": "left",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "desktop_content_vertical",
+      "label": "Content vertical position",
+      "default": "bottom",
+      "options": [
+        {
+          "value": "top",
+          "label": "Top"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "bottom",
+          "label": "Bottom"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "desktop_text_alignment",
+      "label": "Content text alignment",
+      "default": "left",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ]
     },
     {
       "type": "range",
       "id": "desktop_min_height",
       "min": 500,
-      "max": 900,
+      "max": 1000,
       "step": 20,
       "unit": "px",
       "label": "Desktop minimum height",
@@ -282,23 +449,81 @@
     },
     {
       "type": "range",
-      "id": "mobile_min_height",
-      "min": 400,
-      "max": 700,
-      "step": 10,
+      "id": "content_max_width",
+      "min": 320,
+      "max": 800,
+      "step": 20,
       "unit": "px",
-      "label": "Mobile minimum height",
-      "default": 430
+      "label": "Content maximum width",
+      "default": 520
+    },
+    {
+      "type": "header",
+      "content": "Mobile layout"
     },
     {
       "type": "range",
-      "id": "content_max_width",
-      "min": 320,
-      "max": 720,
-      "step": 20,
+      "id": "mobile_min_height",
+      "min": 400,
+      "max": 800,
+      "step": 10,
       "unit": "px",
-      "label": "Desktop content maximum width",
+      "label": "Mobile minimum height",
       "default": 500
+    },
+    {
+      "type": "header",
+      "content": "Announcement bar"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_announcement",
+      "label": "Show announcement bar",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "announcement_text",
+      "label": "Announcement text",
+      "default": "SUSTAINABLE, ETHICALLY MADE CLOTHES IN SIZES XXS TO 6XL"
+    },
+    {
+      "type": "color",
+      "id": "announcement_background",
+      "label": "Announcement background",
+      "default": "#f4f4f4"
+    },
+    {
+      "type": "color",
+      "id": "announcement_text_color",
+      "label": "Announcement text color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "announcement_font_size",
+      "min": 8,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "label": "Announcement font size",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "announcement_vertical_padding",
+      "min": 5,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "label": "Announcement vertical padding",
+      "default": 9
+    },
+    {
+      "type": "checkbox",
+      "id": "announcement_uppercase",
+      "label": "Use uppercase announcement text",
+      "default": true
     }
   ],
   "presets": [

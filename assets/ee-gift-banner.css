@@ -9,7 +9,7 @@
   --ee-test-banner-mobile-image-y: 50%;
   --ee-test-banner-mobile-image-height: 280px;
 
-  --ee-test-banner-header-button-width: 176px;
+  --ee-test-banner-header-button-width: 175px;
   --ee-test-banner-primary-button-width: 220px;
   --ee-test-banner-mobile-button-width: 200px;
   --ee-test-banner-mobile-button-bottom: 40px;
@@ -66,7 +66,6 @@
   font-size: clamp(20px, 1.5vw, 27px);
   font-weight: 700;
   line-height: 1;
-  letter-spacing: 0;
   white-space: nowrap;
 }
 
@@ -86,7 +85,7 @@
   display: none;
 }
 
-/* Shared buttons */
+/* Buttons */
 
 a.ee-test-gift-banner__header-cta,
 a.ee-test-gift-banner__primary-cta {
@@ -94,7 +93,7 @@ a.ee-test-gift-banner__primary-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 22px;
+  gap: 28px;
   min-height: 54px;
   padding: 12px 24px;
   border: 1px solid transparent;
@@ -104,7 +103,6 @@ a.ee-test-gift-banner__primary-cta {
   font-size: 14px;
   font-weight: 500;
   line-height: 1;
-  letter-spacing: 0;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -176,12 +174,14 @@ a.ee-test-gift-banner__primary-cta:focus-visible {
   transition: transform 180ms ease;
 }
 
-a.ee-test-gift-banner__header-cta:hover .ee-test-gift-banner__arrow,
-a.ee-test-gift-banner__primary-cta:hover .ee-test-gift-banner__arrow {
+a.ee-test-gift-banner__header-cta:hover
+  .ee-test-gift-banner__arrow,
+a.ee-test-gift-banner__primary-cta:hover
+  .ee-test-gift-banner__arrow {
   transform: translateX(6px);
 }
 
-/* Desktop hero */
+/* Hero */
 
 .ee-test-gift-banner__hero {
   position: relative;
@@ -194,11 +194,6 @@ a.ee-test-gift-banner__primary-cta:hover .ee-test-gift-banner__arrow {
   overflow: hidden;
   background: #f4f4f2;
 }
-
-/*
- * No desktop overlay is used.
- * The image is displayed with its original color and contrast.
- */
 
 .ee-test-gift-banner__media {
   position: absolute;
@@ -251,7 +246,11 @@ a.ee-test-gift-banner__primary-cta:hover .ee-test-gift-banner__arrow {
   line-height: 1.55;
 }
 
-/* Desktop vertical positioning */
+.ee-test-gift-banner__description--mobile {
+  display: none;
+}
+
+/* Desktop positioning */
 
 .ee-test-gift-banner--vertical-top .ee-test-gift-banner__hero {
   align-items: flex-start;
@@ -264,8 +263,6 @@ a.ee-test-gift-banner__primary-cta:hover .ee-test-gift-banner__arrow {
 .ee-test-gift-banner--vertical-bottom .ee-test-gift-banner__hero {
   align-items: flex-end;
 }
-
-/* Desktop horizontal positioning */
 
 .ee-test-gift-banner--horizontal-left .ee-test-gift-banner__content {
   margin-right: auto;
@@ -281,8 +278,6 @@ a.ee-test-gift-banner__primary-cta:hover .ee-test-gift-banner__arrow {
   margin-right: 0;
   margin-left: auto;
 }
-
-/* Desktop text alignment */
 
 .ee-test-gift-banner--text-left .ee-test-gift-banner__content {
   text-align: left;
@@ -316,7 +311,7 @@ a.ee-test-gift-banner__primary-cta:hover .ee-test-gift-banner__arrow {
   margin-left: auto;
 }
 
-/* Announcement bar */
+/* Announcement */
 
 .ee-test-gift-banner__announcement {
   position: relative;
@@ -349,7 +344,7 @@ a.ee-test-gift-banner__primary-cta:hover .ee-test-gift-banner__arrow {
   text-transform: uppercase;
 }
 
-/* Empty image fallback */
+/* Fallback */
 
 .ee-test-gift-banner__media--fallback {
   background-color: #fafafa;
@@ -520,6 +515,14 @@ a.ee-test-gift-banner__primary-cta:hover .ee-test-gift-banner__arrow {
     text-align: center;
   }
 
+  .ee-test-gift-banner__description--desktop {
+    display: none;
+  }
+
+  .ee-test-gift-banner__description--mobile {
+    display: block;
+  }
+
   .ee-test-gift-banner__description,
   .ee-test-gift-banner--text-left
     .ee-test-gift-banner__description,
@@ -615,27 +618,6 @@ a.ee-test-gift-banner__primary-cta:hover .ee-test-gift-banner__arrow {
     max-width: 100%;
     line-height: 1.3;
     white-space: normal;
-  }
-
-  .ee-test-gift-banner__fallback-circle {
-    top: 12%;
-    right: 4%;
-    width: 110px;
-    height: 110px;
-  }
-
-  .ee-test-gift-banner__fallback-square {
-    top: 25%;
-    left: 5%;
-    width: 140px;
-    height: 110px;
-  }
-
-  .ee-test-gift-banner__fallback-line {
-    right: 10%;
-    bottom: 15%;
-    width: 160px;
-    height: 48px;
   }
 }
 

@@ -5,7 +5,13 @@
   assign mobile_image = section.settings.mobile_image | default: desktop_image
   assign image_alt = section.settings.image_alt | strip
 
-  assign description_text = section.settings.description | strip_html | strip
+  assign desktop_description = section.settings.description | strip_html | strip
+  assign mobile_description = section.settings.mobile_description | strip_html | strip
+
+  if mobile_description == blank
+    assign mobile_description = desktop_description
+  endif
+
   assign header_cta_link = section.settings.header_cta_link
   assign primary_cta_link = section.settings.primary_cta_link
 
@@ -154,9 +160,15 @@
         </h1>
       {%- endif -%}
 
-      {%- if description_text != blank -%}
-        <p class="ee-test-gift-banner__description">
-          {{ description_text | escape | newline_to_br }}
+      {%- if desktop_description != blank -%}
+        <p class="ee-test-gift-banner__description ee-test-gift-banner__description--desktop">
+          {{ desktop_description | escape | newline_to_br }}
+        </p>
+      {%- endif -%}
+
+      {%- if mobile_description != blank -%}
+        <p class="ee-test-gift-banner__description ee-test-gift-banner__description--mobile">
+          {{ mobile_description | escape | newline_to_br }}
         </p>
       {%- endif -%}
 
@@ -257,9 +269,16 @@
     {
       "type": "textarea",
       "id": "description",
-      "label": "Description",
+      "label": "Desktop description",
       "default": "Discover Joy: Your Ultimate Holiday Gift Destination. Explore our curated selection and find the perfect gifts to delight your loved ones this holiday season.",
-      "info": "The same description is displayed on desktop and mobile."
+      "info": "Displayed on desktop and tablet screens."
+    },
+    {
+      "type": "textarea",
+      "id": "mobile_description",
+      "label": "Mobile description",
+      "default": "Discover Joy: Your Ultimate Holiday Gift Destination.",
+      "info": "Displayed on mobile screens. When empty, the desktop description is used."
     },
     {
       "type": "text",

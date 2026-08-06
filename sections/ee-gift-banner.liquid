@@ -1,0 +1,298 @@
+{{ 'ee-gift-banner.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign header_cta_link = section.settings.header_cta_link
+  assign primary_cta_link = section.settings.primary_cta_link
+  assign desktop_image = section.settings.desktop_image
+  assign mobile_image = section.settings.mobile_image | default: desktop_image
+  assign image_alt = section.settings.image_alt | strip
+
+  if header_cta_link == blank
+    assign header_cta_link = routes.all_products_collection_url
+  endif
+
+  if primary_cta_link == blank
+    assign primary_cta_link = routes.all_products_collection_url
+  endif
+-%}
+
+<div
+  id="ee-test-gift-banner-{{ section.id }}"
+  class="ee-test-gift-banner"
+  style="
+    --ee-test-banner-desktop-height: {{ section.settings.desktop_min_height }}px;
+    --ee-test-banner-mobile-height: {{ section.settings.mobile_min_height }}px;
+    --ee-test-banner-content-width: {{ section.settings.content_max_width }}px;
+  "
+>
+  <header class="ee-test-gift-banner__header">
+    <div class="ee-test-gift-banner__header-inner">
+      <span
+        class="ee-test-gift-banner__menu-icon"
+        aria-hidden="true"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+
+      {%- if section.settings.logo_text != blank -%}
+        <div class="ee-test-gift-banner__logo">
+          {{ section.settings.logo_text | escape }}
+        </div>
+      {%- endif -%}
+
+      {%- if section.settings.header_tagline != blank -%}
+        <p class="ee-test-gift-banner__tagline">
+          {{ section.settings.header_tagline | escape }}
+        </p>
+      {%- endif -%}
+
+      {%- if section.settings.header_cta_label != blank -%}
+        <a
+          class="ee-test-gift-banner__header-cta"
+          href="{{ header_cta_link }}"
+        >
+          <span>{{ section.settings.header_cta_label | escape }}</span>
+
+          <svg
+            class="ee-test-gift-banner__arrow"
+            width="22"
+            height="12"
+            viewBox="0 0 22 12"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M1 6H20M15 1L20 6L15 11"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </a>
+      {%- endif -%}
+    </div>
+  </header>
+
+  <div class="ee-test-gift-banner__hero">
+    <div class="ee-test-gift-banner__content">
+      {%- if section.settings.main_heading != blank -%}
+        <h1 class="ee-test-gift-banner__heading">
+          {{ section.settings.main_heading | escape }}
+        </h1>
+      {%- endif -%}
+
+      {%- if section.settings.description != blank -%}
+        <div class="ee-test-gift-banner__description">
+          {{ section.settings.description | escape | newline_to_br }}
+        </div>
+      {%- endif -%}
+
+      {%- if section.settings.primary_cta_label != blank -%}
+        <a
+          class="ee-test-gift-banner__primary-cta"
+          href="{{ primary_cta_link }}"
+        >
+          <span>{{ section.settings.primary_cta_label | escape }}</span>
+
+          <svg
+            class="ee-test-gift-banner__arrow"
+            width="22"
+            height="12"
+            viewBox="0 0 22 12"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M1 6H20M15 1L20 6L15 11"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </a>
+      {%- endif -%}
+    </div>
+
+    {%- if desktop_image != blank -%}
+      <picture class="ee-test-gift-banner__media">
+        {%- if mobile_image != blank -%}
+          <source
+            media="(max-width: 749px)"
+            srcset="
+              {{ mobile_image | image_url: width: 375 }} 375w,
+              {{ mobile_image | image_url: width: 550 }} 550w,
+              {{ mobile_image | image_url: width: 750 }} 750w,
+              {{ mobile_image | image_url: width: 900 }} 900w
+            "
+            sizes="100vw"
+          >
+        {%- endif -%}
+
+        {{
+          desktop_image
+          | image_url: width: 2400
+          | image_tag:
+            widths: '750, 1100, 1500, 1800, 2200, 2400',
+            sizes: '100vw',
+            class: 'ee-test-gift-banner__image',
+            loading: 'eager',
+            fetchpriority: 'high',
+            alt: image_alt
+        }}
+      </picture>
+    {%- else -%}
+      <div
+        class="ee-test-gift-banner__media ee-test-gift-banner__media--fallback"
+        aria-hidden="true"
+      >
+        <span class="ee-test-gift-banner__fallback-circle"></span>
+        <span class="ee-test-gift-banner__fallback-square"></span>
+        <span class="ee-test-gift-banner__fallback-line"></span>
+      </div>
+    {%- endif -%}
+  </div>
+
+  {%- if section.settings.announcement_text != blank -%}
+    <div class="ee-test-gift-banner__announcement">
+      <p>{{ section.settings.announcement_text | escape }}</p>
+    </div>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "EE gift banner",
+  "tag": "section",
+  "class": "ee-test-gift-banner-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Header"
+    },
+    {
+      "type": "text",
+      "id": "logo_text",
+      "label": "Logo text",
+      "default": "TISSO VISON"
+    },
+    {
+      "type": "text",
+      "id": "header_tagline",
+      "label": "Header tagline",
+      "default": "Find the ideal gift for your loved ones."
+    },
+    {
+      "type": "text",
+      "id": "header_cta_label",
+      "label": "Header CTA label",
+      "default": "CHOOSE GIFT"
+    },
+    {
+      "type": "url",
+      "id": "header_cta_link",
+      "label": "Header CTA link"
+    },
+    {
+      "type": "header",
+      "content": "Gift guide"
+    },
+    {
+      "type": "text",
+      "id": "main_heading",
+      "label": "Main heading",
+      "default": "The Gift Guide"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description",
+      "default": "Discover Joy: Your Ultimate Holiday Gift Destination. Explore our curated selection and find the perfect gifts to delight your loved ones this holiday season."
+    },
+    {
+      "type": "text",
+      "id": "primary_cta_label",
+      "label": "Primary CTA label",
+      "default": "SHOP NOW"
+    },
+    {
+      "type": "url",
+      "id": "primary_cta_link",
+      "label": "Primary CTA link"
+    },
+    {
+      "type": "text",
+      "id": "announcement_text",
+      "label": "Announcement text",
+      "default": "SUSTAINABLE, ETHICALLY MADE CLOTHES IN SIZES XXS TO 6XL"
+    },
+    {
+      "type": "header",
+      "content": "Images"
+    },
+    {
+      "type": "image_picker",
+      "id": "desktop_image",
+      "label": "Desktop image"
+    },
+    {
+      "type": "image_picker",
+      "id": "mobile_image",
+      "label": "Mobile image",
+      "info": "The desktop image is used when no mobile image is selected."
+    },
+    {
+      "type": "text",
+      "id": "image_alt",
+      "label": "Image alternative text",
+      "info": "Describe meaningful image content. Leave blank when the image is purely decorative."
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "desktop_min_height",
+      "min": 500,
+      "max": 900,
+      "step": 20,
+      "unit": "px",
+      "label": "Desktop minimum height",
+      "default": 680
+    },
+    {
+      "type": "range",
+      "id": "mobile_min_height",
+      "min": 360,
+      "max": 700,
+      "step": 20,
+      "unit": "px",
+      "label": "Mobile minimum height",
+      "default": 440
+    },
+    {
+      "type": "range",
+      "id": "content_max_width",
+      "min": 320,
+      "max": 720,
+      "step": 20,
+      "unit": "px",
+      "label": "Content maximum width",
+      "default": 500
+    }
+  ],
+  "presets": [
+    {
+      "name": "EE gift banner"
+    }
+  ]
+}
+{% endschema %}

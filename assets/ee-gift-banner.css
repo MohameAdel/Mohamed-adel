@@ -189,8 +189,8 @@ a.ee-test-gift-banner__primary-cta:hover
   display: flex;
   min-height: var(--ee-test-banner-desktop-height);
   padding:
-    clamp(54px, 7vw, 110px)
-    clamp(40px, 7vw, 124px);
+   clamp(53px, 7vw, 20px) 
+   clamp(40px, 5vw, 100px);
   overflow: hidden;
   background: #f4f4f2;
 }

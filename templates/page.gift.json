@@ -11,13 +11,35 @@
   "sections": {
     "main": {
       "type": "main-page",
+      "disabled": true,
       "settings": {
         "padding_top": 28,
         "padding_bottom": 28
       }
+    },
+    "ee_gift_banner_YeTVgW": {
+      "type": "ee-gift-banner",
+      "name": "EE gift banner",
+      "settings": {
+        "logo_text": "TISSO VISON",
+        "header_tagline": "Find the ideal gift for your loved ones.",
+        "header_cta_label": "CHOOSE GIFT",
+        "header_cta_link": "",
+        "main_heading": "The Gift Guide",
+        "description": "Discover Joy: Your Ultimate Holiday Gift Destination. Explore our curated selection and find the perfect gifts to delight your loved ones this holiday season.",
+        "primary_cta_label": "SHOP NOW",
+        "primary_cta_link": "",
+        "announcement_text": "SUSTAINABLE, ETHICALLY MADE CLOTHES IN SIZES XXS TO 6XL",
+        "desktop_image": "shopify://shop_images/Group_1000008197.png",
+        "image_alt": "",
+        "desktop_min_height": 680,
+        "mobile_min_height": 440,
+        "content_max_width": 500
+      }
     }
   },
   "order": [
-    "main"
+    "main",
+    "ee_gift_banner_YeTVgW"
   ]
 }

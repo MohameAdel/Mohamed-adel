@@ -510,7 +510,7 @@ a.ee-test-gift-banner__primary-cta:hover
     margin: 0 auto;
     padding: 0;
     font-size: clamp(31px, 8.4vw, 38px);
-    font-weight: 700;
+    font-weight: 500;
     line-height: 1.08;
     letter-spacing: -0.035em;
     text-align: center;

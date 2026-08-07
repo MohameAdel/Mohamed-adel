@@ -330,7 +330,9 @@
       {%- render 'cart-drawer' -%}
     {%- endif -%}
 
-    {% sections 'header-group' %}
+    {% unless template.suffix == 'gift-guide' %}
+  {% sections 'header-group' %}
+{% endunless %}
 
     <main
       id="MainContent"
@@ -342,8 +344,9 @@
       {{ content_for_layout }}
     </main>
 
-    {% sections 'footer-group' %}
-
+{% unless template.suffix == 'gift-guide' %}
+  {% sections 'footer-group' %}
+{% endunless %}
     <ul hidden>
       <li id="a11y-refresh-page-message">{{ 'accessibility.refresh_page' | t }}</li>
       <li id="a11y-new-window-message">{{ 'accessibility.link_messages.new_window' | t }}</li>

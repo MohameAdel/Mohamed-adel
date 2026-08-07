@@ -18,7 +18,7 @@
 
   const QUALIFYING_VALUES = [
     'black',
-    'medium'
+    'm'
   ];
 
   const routesRoot =

@@ -291,65 +291,115 @@
    * Add Soft Winter Jacket.
    */
   async function addBonusVariant(
-    variantId
-  ) {
-    const response =
-      await originalFetch(
-        `${routesRoot}cart/add.js`,
-        {
-          method: 'POST',
-
-          headers: {
-            'Content-Type':
-              'application/json',
-
-            Accept:
-              'application/json'
-          },
-
-          body: JSON.stringify({
-            items: [
-              {
-                id: variantId,
-                quantity: 1
-              }
-            ]
-          })
-        }
-      );
-
-    let data = null;
-
-    try {
-      data = await response.json();
-    } catch (error) {
-      data = null;
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        data?.description ||
-        data?.message ||
-        'Soft Winter Jacket could not be added.'
-      );
-    }
-
-    /*
-     * Optional event.
-     * Other theme code can listen to it.
-     */
-    document.dispatchEvent(
-      new CustomEvent(
-        'global-bonus:added',
-        {
-          detail: data
-        }
-      )
+  variantId
+) {
+  const cartUI =
+    document.querySelector(
+      'cart-notification'
+    ) ||
+    document.querySelector(
+      'cart-drawer'
     );
 
-    return data;
+  let sections = [];
+
+  if (
+    cartUI &&
+    typeof cartUI.getSectionsToRender ===
+      'function'
+  ) {
+    sections =
+      cartUI
+        .getSectionsToRender()
+        .map((section) => section.id)
+        .filter(Boolean);
   }
 
+  const requestBody = {
+    items: [
+      {
+        id: variantId,
+        quantity: 1
+      }
+    ]
+  };
+
+  /*
+   * Ask Shopify to return fresh
+   * cart notification / drawer HTML.
+   */
+  if (sections.length) {
+    requestBody.sections =
+      sections.join(',');
+
+    requestBody.sections_url =
+      window.location.pathname;
+  }
+
+  const response =
+    await originalFetch(
+      `${routesRoot}cart/add.js`,
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type':
+            'application/json',
+
+          Accept:
+            'application/json'
+        },
+
+        body: JSON.stringify(
+          requestBody
+        )
+      }
+    );
+
+  let data = null;
+
+  try {
+    data =
+      await response.json();
+  } catch (error) {
+    data = null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.description ||
+      data?.message ||
+      'Soft Winter Jacket could not be added.'
+    );
+  }
+
+  /*
+   * Refresh Dawn cart notification /
+   * cart drawer immediately.
+   */
+  if (
+    cartUI &&
+    typeof cartUI.renderContents ===
+      'function' &&
+    data
+  ) {
+    cartUI.renderContents(data);
+  }
+
+  /*
+   * Notify any other theme code.
+   */
+  document.dispatchEvent(
+    new CustomEvent(
+      'global-bonus:added',
+      {
+        detail: data
+      }
+    )
+  );
+
+  return data;
+}
   /*
    * Main global controller.
    */

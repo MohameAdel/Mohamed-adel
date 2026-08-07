@@ -586,47 +586,9 @@
     }
 
     renderOptions(product) {
-  if (!this.optionsElement) {
-    return;
-  }
-
-  this.optionsElement.replaceChildren();
-
-  const optionNames =
-    this.getOptionNames(product);
-
-  optionNames.forEach(
-    (optionName, index) => {
-      const values =
-        this.getOptionValues(
-          product,
-          index
-        );
-
-      const normalizedName =
-        String(optionName)
-          .trim()
-          .toLowerCase();
-
-      if (
-        normalizedName === 'color' ||
-        normalizedName === 'colour'
-      ) {
-        this.renderFirstOption(
-          optionName,
-          values,
-          index
-        );
-      } else {
-        this.renderSelectOption(
-          optionName,
-          values,
-          index
-        );
+      if (!this.optionsElement) {
+        return;
       }
-    }
-  );
-}
 
       this.optionsElement.replaceChildren();
 

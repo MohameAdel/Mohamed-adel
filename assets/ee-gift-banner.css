@@ -625,6 +625,9 @@ a.ee-test-gift-banner__primary-cta:hover
 /* Small mobile */
 
 @media screen and (max-width: 479px) {
+  .ee-test-gift-banner__announcement p {
+  font-size: 11px;
+}
   .ee-test-gift-banner__header {
     min-height: 68px;
   }

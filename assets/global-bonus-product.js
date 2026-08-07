@@ -534,31 +534,36 @@
    * Quick Add, product forms using fetch,
    * custom AJAX sections, etc.
    */
-  window.fetch =
-    async function (...args) {
-      const cartAddRequest =
-        isCartAddRequest(args[0]);
+ window.fetch =
+  async function (...args) {
+    const cartAddRequest =
+      isCartAddRequest(args[0]);
 
-      const response =
-        await originalFetch(...args);
+    const response =
+      await originalFetch(...args);
 
-      if (
-        cartAddRequest &&
-        response.ok
-      ) {
-        /*
-         * Wait until bonus product has
-         * been processed before returning
-         * control to the theme.
-         *
-         * This helps cart drawers refresh
-         * with the bonus already present.
-         */
-        await syncBonusProduct();
-      }
+    if (
+      cartAddRequest &&
+      response.ok
+    ) {
+      /*
+       * IMPORTANT:
+       * Return the original Add to Cart
+       * response to Shopify first.
+       *
+       * Shopify/Dawn will render its
+       * original cart notification.
+       *
+       * Then we add + render the bonus
+       * product AFTER that render.
+       */
+      window.setTimeout(() => {
+        syncBonusProduct();
+      }, 150);
+    }
 
-      return response;
-    };
+    return response;
+  };
 
   /*
    * ------------------------------------------------

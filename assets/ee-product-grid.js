@@ -1,194 +1,242 @@
 (() => {
-  const ELEMENT_NAME = 'ee-test-product-grid';
+  'use strict';
 
-  if (customElements.get(ELEMENT_NAME)) {
-    return;
-  }
+  const SELECTORS = {
+    grid: '[data-gift-guide-grid]',
+    hotspot: '.gift-guide-grid__hotspot',
 
-  class EETestProductGrid extends HTMLElement {
-    connectedCallback() {
-      this.cleanupListeners();
+    modal: '[data-gift-guide-modal]',
+    dialog: '[data-modal-dialog]',
+    close: '[data-modal-close]',
 
-      this.controller = new AbortController();
-      this.signal = this.controller.signal;
+    loading: '[data-modal-loading]',
+    error: '[data-modal-error]',
+    content: '[data-modal-content]',
 
-      this.modal = this.querySelector('[data-ee-test-modal]');
-      this.dialog = this.querySelector('[data-ee-test-dialog]');
-      this.backdrop = this.querySelector('[data-ee-test-modal-backdrop]');
-      this.closeButton = this.querySelector('[data-ee-test-modal-close]');
+    image: '[data-modal-image]',
+    title: '[data-modal-title]',
+    price: '[data-modal-price]',
+    description: '[data-modal-description]',
 
-      this.image = this.querySelector('[data-ee-test-popup-image]');
-      this.title = this.querySelector('[data-ee-test-popup-title]');
-      this.price = this.querySelector('[data-ee-test-popup-price]');
-      this.comparePrice = this.querySelector(
-        '[data-ee-test-popup-compare-price]'
+    options: '[data-modal-options]',
+    status: '[data-modal-status]',
+
+    addButton: '[data-modal-add]',
+    addLabel: '[data-modal-add-label]'
+  };
+
+  const instances = new WeakMap();
+
+  class GiftGuideGrid {
+    constructor(root) {
+      this.root = root;
+
+      this.abortController = new AbortController();
+      this.signal = this.abortController.signal;
+
+      this.modal = root.querySelector(SELECTORS.modal);
+      this.dialog = root.querySelector(SELECTORS.dialog);
+
+      this.loadingElement = root.querySelector(SELECTORS.loading);
+      this.errorElement = root.querySelector(SELECTORS.error);
+      this.contentElement = root.querySelector(SELECTORS.content);
+
+      this.imageElement = root.querySelector(SELECTORS.image);
+      this.titleElement = root.querySelector(SELECTORS.title);
+      this.priceElement = root.querySelector(SELECTORS.price);
+      this.descriptionElement = root.querySelector(
+        SELECTORS.description
       );
-      this.description = this.querySelector(
-        '[data-ee-test-popup-description]'
-      );
-      this.optionsContainer = this.querySelector('[data-ee-test-options]');
-      this.availability = this.querySelector(
-        '[data-ee-test-availability]'
-      );
-      this.addButton = this.querySelector('[data-ee-test-add-button]');
-      this.status = this.querySelector('[data-ee-test-status]');
 
-      this.products = new Map();
-      this.activeProduct = null;
-      this.activeVariant = null;
-      this.activeTrigger = null;
+      this.optionsElement = root.querySelector(SELECTORS.options);
+      this.statusElement = root.querySelector(SELECTORS.status);
+
+      this.addButton = root.querySelector(SELECTORS.addButton);
+      this.addLabel = root.querySelector(SELECTORS.addLabel);
+
+      this.currency =
+        root.dataset.currency || 'USD';
+
+      this.routesRoot =
+        window.Shopify &&
+        window.Shopify.routes &&
+        window.Shopify.routes.root
+          ? window.Shopify.routes.root
+          : '/';
+
+      this.defaultAddLabel =
+        this.addLabel?.textContent.trim() ||
+        'ADD TO CART';
+
+      this.currentProduct = null;
+      this.currentVariant = null;
+      this.currentTrigger = null;
+
       this.selectedOptions = [];
-      this.isSubmitting = false;
+
       this.isOpen = false;
-      this.successTimer = null;
-      this.previousBodyOverflow = '';
+      this.isSubmitting = false;
 
-      this.readProductData();
-      this.bindEvents();
+      this.bodyOverflowBeforeOpen = '';
+
+      this.init();
     }
 
-    disconnectedCallback() {
-      if (this.isOpen) {
-        this.closeModal(false);
-      }
-
-      this.cleanupListeners();
-
-      if (this.successTimer) {
-        window.clearTimeout(this.successTimer);
-        this.successTimer = null;
-      }
-    }
-
-    cleanupListeners() {
-      if (this.controller) {
-        this.controller.abort();
-        this.controller = null;
-      }
-    }
-
-    readProductData() {
-      const dataElement = this.querySelector('[data-ee-test-products]');
-
-      if (!dataElement) {
-        return;
-      }
-
-      try {
-        const parsedData = JSON.parse(dataElement.textContent);
-
-        if (!parsedData || !Array.isArray(parsedData.products)) {
-          return;
-        }
-
-        parsedData.products.forEach((product) => {
-          if (product && product.blockId) {
-            this.products.set(String(product.blockId), product);
-          }
-        });
-      } catch (error) {
-        console.error('EE product grid: invalid product JSON.', error);
-      }
-    }
-
-    bindEvents() {
-      this.addEventListener(
+    init() {
+      this.root.addEventListener(
         'click',
-        (event) => this.handleClick(event),
-        { signal: this.signal }
+        this.handleRootClick.bind(this),
+        {
+          signal: this.signal
+        }
       );
 
-      this.addEventListener(
+      this.root.addEventListener(
         'change',
-        (event) => this.handleChange(event),
-        { signal: this.signal }
+        this.handleRootChange.bind(this),
+        {
+          signal: this.signal
+        }
       );
 
       document.addEventListener(
         'keydown',
-        (event) => this.handleDocumentKeydown(event),
-        { signal: this.signal }
+        this.handleDocumentKeydown.bind(this),
+        {
+          signal: this.signal
+        }
       );
     }
 
-    handleClick(event) {
-      const hotspot = event.target.closest('[data-ee-test-hotspot]');
-
-      if (hotspot && this.contains(hotspot)) {
-        const blockId = hotspot.dataset.blockId;
-        const product = this.products.get(String(blockId));
-
-        if (product) {
-          this.openModal(product, hotspot);
-        }
-
-        return;
+    destroy() {
+      if (this.isOpen) {
+        this.closeModal(false);
       }
 
-      const optionButton = event.target.closest(
-        '[data-ee-test-option-button]'
+      this.abortController.abort();
+    }
+
+    handleRootClick(event) {
+      const hotspot = event.target.closest(
+        SELECTORS.hotspot
       );
 
       if (
-        optionButton &&
-        this.optionsContainer &&
-        this.optionsContainer.contains(optionButton)
+        hotspot &&
+        this.root.contains(hotspot)
       ) {
-        const optionIndex = Number(optionButton.dataset.optionIndex);
-        const optionValue = optionButton.dataset.optionValue;
+        event.preventDefault();
 
-        if (
-          Number.isInteger(optionIndex) &&
-          typeof optionValue === 'string'
-        ) {
-          this.selectedOptions[optionIndex] = optionValue;
-          this.updateOptionButtonStates(optionIndex);
-          this.updateVariant();
+        const handle =
+          hotspot.dataset.productHandle;
+
+        if (handle) {
+          this.openProduct(
+            handle,
+            hotspot
+          );
         }
 
         return;
       }
 
+      const closeButton =
+        event.target.closest(
+          SELECTORS.close
+        );
+
       if (
-        event.target.closest('[data-ee-test-modal-close]') &&
-        this.isOpen
+        closeButton &&
+        this.modal &&
+        this.modal.contains(closeButton)
       ) {
+        event.preventDefault();
+
         this.closeModal(true);
+
         return;
       }
 
-      if (event.target === this.backdrop && this.isOpen) {
-        this.closeModal(true);
+      const optionButton =
+        event.target.closest(
+          '[data-gift-option-button]'
+        );
+
+      if (
+        optionButton &&
+        this.optionsElement &&
+        this.optionsElement.contains(
+          optionButton
+        )
+      ) {
+        event.preventDefault();
+
+        const index = Number(
+          optionButton.dataset.optionIndex
+        );
+
+        const value =
+          optionButton.dataset.optionValue;
+
+        if (
+          Number.isInteger(index) &&
+          typeof value === 'string'
+        ) {
+          this.selectedOptions[index] =
+            value;
+
+          this.updateButtonStates(index);
+
+          this.updateSelectedVariant();
+        }
+
         return;
       }
 
+      const addButton =
+        event.target.closest(
+          SELECTORS.addButton
+        );
+
       if (
-        event.target.closest('[data-ee-test-add-button]') &&
-        this.isOpen
+        addButton &&
+        this.modal &&
+        this.modal.contains(addButton)
       ) {
+        event.preventDefault();
+
         this.addToCart();
       }
     }
 
-    handleChange(event) {
-      const select = event.target.closest('[data-ee-test-option-select]');
+    handleRootChange(event) {
+      const select =
+        event.target.closest(
+          '[data-gift-option-select]'
+        );
 
       if (
         !select ||
-        !this.optionsContainer ||
-        !this.optionsContainer.contains(select)
+        !this.optionsElement ||
+        !this.optionsElement.contains(
+          select
+        )
       ) {
         return;
       }
 
-      const optionIndex = Number(select.dataset.optionIndex);
+      const index = Number(
+        select.dataset.optionIndex
+      );
 
-      if (!Number.isInteger(optionIndex)) {
+      if (!Number.isInteger(index)) {
         return;
       }
 
-      this.selectedOptions[optionIndex] = select.value;
-      this.updateVariant();
+      this.selectedOptions[index] =
+        select.value;
+
+      this.updateSelectedVariant();
     }
 
     handleDocumentKeydown(event) {
@@ -198,7 +246,9 @@
 
       if (event.key === 'Escape') {
         event.preventDefault();
+
         this.closeModal(true);
+
         return;
       }
 
@@ -207,366 +257,879 @@
       }
     }
 
-    openModal(product, trigger) {
-      if (!this.modal || !this.dialog) {
-        return;
-      }
-
-      if (this.successTimer) {
-        window.clearTimeout(this.successTimer);
-        this.successTimer = null;
-      }
-
-      this.activeProduct = product;
-      this.activeTrigger = trigger;
-      this.isSubmitting = false;
-
-      const defaultVariant =
-        product.variants.find(
-          (variant) => variant.id === product.defaultVariantId
-        ) ||
-        product.variants.find((variant) => variant.available) ||
-        product.variants[0] ||
-        null;
-
-      if (defaultVariant) {
-        this.selectedOptions = [...defaultVariant.options];
-      } else {
-        this.selectedOptions = product.options.map(
-          (option) => option.values[0] || ''
-        );
-      }
-
-      this.title.textContent = product.title || '';
-      this.description.textContent = product.description || '';
-      this.status.textContent = '';
-
-      this.updateImage(product.featuredImage);
-      this.renderOptions();
-      this.updateVariant();
-
-      this.modal.hidden = false;
-      this.isOpen = true;
-      this.lockBody();
-
-      window.requestAnimationFrame(() => {
-        if (this.closeButton) {
-          this.closeButton.focus();
-        }
-      });
-    }
-
-    closeModal(restoreFocus = true) {
+    async openProduct(handle, trigger) {
       if (!this.modal) {
         return;
       }
 
-      this.modal.hidden = true;
-      this.isOpen = false;
-      this.isSubmitting = false;
+      this.currentTrigger = trigger;
 
-      this.unlockBody();
+      this.showModal();
+      this.showLoading();
 
-      if (
-        restoreFocus &&
-        this.activeTrigger &&
-        this.activeTrigger.isConnected
-      ) {
-        this.activeTrigger.focus();
-      }
+      try {
+        const product =
+          await this.fetchProduct(handle);
 
-      this.activeProduct = null;
-      this.activeVariant = null;
-      this.activeTrigger = null;
-      this.selectedOptions = [];
+        this.currentProduct = product;
 
-      if (this.status) {
-        this.status.textContent = '';
+        this.prepareProduct(product);
+
+        this.showContent();
+      } catch (error) {
+        console.error(
+          'Gift guide product error:',
+          error
+        );
+
+        this.showError();
       }
     }
 
-    renderOptions() {
-      if (!this.optionsContainer || !this.activeProduct) {
+    async fetchProduct(handle) {
+      const encodedHandle =
+        encodeURIComponent(handle);
+
+      const url =
+        `${this.routesRoot}products/${encodedHandle}.js`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Product request failed with status ${response.status}`
+        );
+      }
+
+      const product =
+        await response.json();
+
+      if (
+        !product ||
+        !Array.isArray(product.variants)
+      ) {
+        throw new Error(
+          'Invalid product data returned by Shopify.'
+        );
+      }
+
+      return product;
+    }
+
+    prepareProduct(product) {
+      const startingVariant =
+        product.variants.find(
+          (variant) => variant.available
+        ) ||
+        product.variants[0] ||
+        null;
+
+      this.currentVariant =
+        startingVariant;
+
+      if (startingVariant) {
+        this.selectedOptions =
+          this.getVariantOptions(
+            startingVariant
+          );
+      } else {
+        this.selectedOptions =
+          this.getDefaultOptionValues(
+            product
+          );
+      }
+
+      this.renderProductInfo(product);
+      this.renderOptions(product);
+      this.updateSelectedVariant();
+    }
+
+    renderProductInfo(product) {
+      if (this.titleElement) {
+        this.titleElement.textContent =
+          product.title || '';
+      }
+
+      if (this.descriptionElement) {
+        this.descriptionElement.textContent =
+          this.htmlToPlainText(
+            product.description || ''
+          );
+      }
+
+      this.updateProductImage(
+        this.getProductImage(product)
+      );
+    }
+
+    getProductImage(product) {
+      if (product.featured_image) {
+        if (
+          typeof product.featured_image ===
+          'string'
+        ) {
+          return {
+            src: product.featured_image,
+            alt: product.title || ''
+          };
+        }
+
+        if (
+          typeof product.featured_image ===
+          'object'
+        ) {
+          return {
+            src:
+              product.featured_image.src ||
+              '',
+            alt:
+              product.featured_image.alt ||
+              product.title ||
+              ''
+          };
+        }
+      }
+
+      if (
+        Array.isArray(product.images) &&
+        product.images.length
+      ) {
+        const firstImage =
+          product.images[0];
+
+        if (
+          typeof firstImage === 'string'
+        ) {
+          return {
+            src: firstImage,
+            alt: product.title || ''
+          };
+        }
+
+        if (
+          firstImage &&
+          firstImage.src
+        ) {
+          return {
+            src: firstImage.src,
+            alt:
+              firstImage.alt ||
+              product.title ||
+              ''
+          };
+        }
+      }
+
+      return null;
+    }
+
+    getVariantImage(variant) {
+      const image =
+        variant?.featured_image;
+
+      if (!image) {
+        return null;
+      }
+
+      if (typeof image === 'string') {
+        return {
+          src: image,
+          alt:
+            this.currentProduct?.title ||
+            ''
+        };
+      }
+
+      return {
+        src: image.src || '',
+        alt:
+          image.alt ||
+          this.currentProduct?.title ||
+          ''
+      };
+    }
+
+    updateProductImage(image) {
+      if (!this.imageElement) {
         return;
       }
 
-      this.optionsContainer.replaceChildren();
+      if (!image || !image.src) {
+        this.imageElement.removeAttribute(
+          'src'
+        );
 
-      this.activeProduct.options.forEach((option, optionIndex) => {
-        if (optionIndex === 0) {
-          this.renderFirstOption(option, optionIndex);
-        } else {
-          this.renderSelectOption(option, optionIndex);
-        }
-      });
+        this.imageElement.alt = '';
+
+        return;
+      }
+
+      this.imageElement.src = image.src;
+
+      this.imageElement.alt =
+        image.alt ||
+        this.currentProduct?.title ||
+        '';
     }
 
-    renderFirstOption(option, optionIndex) {
-      const fieldset = document.createElement('fieldset');
-      fieldset.className = 'ee-test-product-grid__option-group';
+    htmlToPlainText(html) {
+      const element =
+        document.createElement('div');
 
-      const legend = document.createElement('legend');
-      legend.className = 'ee-test-product-grid__option-legend';
-      legend.textContent = option.name;
+      element.innerHTML = html;
 
-      const buttonContainer = document.createElement('div');
-      buttonContainer.className =
-        'ee-test-product-grid__option-buttons';
+      return (
+        element.textContent ||
+        element.innerText ||
+        ''
+      ).trim();
+    }
 
-      option.values.forEach((value) => {
-        const button = document.createElement('button');
+    getOptionNames(product) {
+      if (
+        !Array.isArray(product.options)
+      ) {
+        return [];
+      }
+
+      return product.options.map(
+        (option, index) => {
+          if (
+            typeof option === 'string'
+          ) {
+            return option;
+          }
+
+          if (
+            option &&
+            typeof option.name ===
+              'string'
+          ) {
+            return option.name;
+          }
+
+          return `Option ${index + 1}`;
+        }
+      );
+    }
+
+    getVariantOptions(variant) {
+      if (
+        Array.isArray(variant.options)
+      ) {
+        return variant.options.map(
+          (value) =>
+            value == null
+              ? ''
+              : String(value)
+        );
+      }
+
+      return [
+        variant.option1,
+        variant.option2,
+        variant.option3
+      ]
+        .filter(
+          (value) => value != null
+        )
+        .map(String);
+    }
+
+    getOptionValues(
+      product,
+      optionIndex
+    ) {
+      const seen = new Set();
+      const values = [];
+
+      product.variants.forEach(
+        (variant) => {
+          const options =
+            this.getVariantOptions(
+              variant
+            );
+
+          const value =
+            options[optionIndex];
+
+          if (
+            value != null &&
+            value !== '' &&
+            !seen.has(value)
+          ) {
+            seen.add(value);
+            values.push(value);
+          }
+        }
+      );
+
+      return values;
+    }
+
+    getDefaultOptionValues(product) {
+      const names =
+        this.getOptionNames(product);
+
+      return names.map(
+        (_, index) =>
+          this.getOptionValues(
+            product,
+            index
+          )[0] || ''
+      );
+    }
+
+    renderOptions(product) {
+      if (!this.optionsElement) {
+        return;
+      }
+
+      this.optionsElement.replaceChildren();
+
+      const optionNames =
+        this.getOptionNames(product);
+
+      optionNames.forEach(
+        (optionName, index) => {
+          const values =
+            this.getOptionValues(
+              product,
+              index
+            );
+
+          if (index === 0) {
+            this.renderFirstOption(
+              optionName,
+              values,
+              index
+            );
+          } else {
+            this.renderSelectOption(
+              optionName,
+              values,
+              index
+            );
+          }
+        }
+      );
+    }
+
+    renderFirstOption(
+      name,
+      values,
+      index
+    ) {
+      const fieldset =
+        document.createElement(
+          'fieldset'
+        );
+
+      fieldset.className =
+        'gift-guide-modal__option-group';
+
+      const legend =
+        document.createElement(
+          'legend'
+        );
+
+      legend.className =
+        'gift-guide-modal__option-label';
+
+      legend.textContent = name;
+
+      const valuesWrapper =
+        document.createElement('div');
+
+      valuesWrapper.className =
+        'gift-guide-modal__option-values';
+
+      values.forEach((value) => {
+        const button =
+          document.createElement(
+            'button'
+          );
 
         button.type = 'button';
-        button.className = 'ee-test-product-grid__option-button';
-        button.dataset.eeTestOptionButton = '';
-        button.dataset.optionIndex = String(optionIndex);
-        button.dataset.optionValue = String(value);
-        button.textContent = String(value);
+
+        button.className =
+          'gift-guide-modal__option-button';
+
+        button.dataset.giftOptionButton =
+          '';
+
+        button.dataset.optionIndex =
+          String(index);
+
+        button.dataset.optionValue =
+          String(value);
+
+        button.textContent =
+          String(value);
 
         const selected =
-          String(this.selectedOptions[optionIndex]) === String(value);
+          String(
+            this.selectedOptions[index]
+          ) === String(value);
 
         button.setAttribute(
           'aria-pressed',
-          selected ? 'true' : 'false'
+          selected
+            ? 'true'
+            : 'false'
         );
 
-        buttonContainer.appendChild(button);
+        valuesWrapper.appendChild(
+          button
+        );
       });
 
       fieldset.appendChild(legend);
-      fieldset.appendChild(buttonContainer);
+      fieldset.appendChild(
+        valuesWrapper
+      );
 
-      this.optionsContainer.appendChild(fieldset);
+      this.optionsElement.appendChild(
+        fieldset
+      );
     }
 
-    renderSelectOption(option, optionIndex) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'ee-test-product-grid__option-group';
+    renderSelectOption(
+      name,
+      values,
+      index
+    ) {
+      const wrapper =
+        document.createElement('div');
 
-      const label = document.createElement('label');
-      const select = document.createElement('select');
+      wrapper.className =
+        'gift-guide-modal__option-group';
 
-      const selectId = [
-        'ee-test-option',
-        this.dataset.sectionId || 'section',
-        optionIndex
-      ].join('-');
+      const label =
+        document.createElement('label');
 
-      label.className = 'ee-test-product-grid__select-label';
+      label.className =
+        'gift-guide-modal__option-label';
+
+      const sectionId =
+        this.root.dataset.sectionId ||
+        'section';
+
+      const selectId =
+        `GiftGuideOption-${sectionId}-${index}`;
+
       label.htmlFor = selectId;
-      label.textContent = option.name;
+      label.textContent = name;
+
+      const select =
+        document.createElement(
+          'select'
+        );
 
       select.id = selectId;
-      select.className = 'ee-test-product-grid__select';
-      select.dataset.eeTestOptionSelect = '';
-      select.dataset.optionIndex = String(optionIndex);
 
-      option.values.forEach((value) => {
-        const optionElement = document.createElement('option');
+      select.className =
+        'gift-guide-modal__option-select';
 
-        optionElement.value = String(value);
-        optionElement.textContent = String(value);
+      select.dataset.giftOptionSelect =
+        '';
+
+      select.dataset.optionIndex =
+        String(index);
+
+      values.forEach((value) => {
+        const option =
+          document.createElement(
+            'option'
+          );
+
+        option.value =
+          String(value);
+
+        option.textContent =
+          String(value);
 
         if (
-          String(this.selectedOptions[optionIndex]) === String(value)
+          String(
+            this.selectedOptions[index]
+          ) === String(value)
         ) {
-          optionElement.selected = true;
+          option.selected = true;
         }
 
-        select.appendChild(optionElement);
+        select.appendChild(option);
       });
 
       wrapper.appendChild(label);
       wrapper.appendChild(select);
 
-      this.optionsContainer.appendChild(wrapper);
+      this.optionsElement.appendChild(
+        wrapper
+      );
     }
 
-    updateOptionButtonStates(optionIndex) {
-      if (!this.optionsContainer) {
+    updateButtonStates(index) {
+      if (!this.optionsElement) {
         return;
       }
 
-      const buttons = this.optionsContainer.querySelectorAll(
-        `[data-ee-test-option-button][data-option-index="${optionIndex}"]`
-      );
+      const buttons =
+        this.optionsElement.querySelectorAll(
+          `[data-gift-option-button][data-option-index="${index}"]`
+        );
 
       buttons.forEach((button) => {
         const selected =
-          String(button.dataset.optionValue) ===
-          String(this.selectedOptions[optionIndex]);
+          String(
+            button.dataset.optionValue
+          ) ===
+          String(
+            this.selectedOptions[index]
+          );
 
         button.setAttribute(
           'aria-pressed',
-          selected ? 'true' : 'false'
+          selected
+            ? 'true'
+            : 'false'
         );
       });
     }
 
     findSelectedVariant() {
-      if (!this.activeProduct) {
+      if (!this.currentProduct) {
         return null;
       }
 
       return (
-        this.activeProduct.variants.find((variant) => {
-          if (
-            !Array.isArray(variant.options) ||
-            variant.options.length !== this.selectedOptions.length
-          ) {
-            return false;
-          }
+        this.currentProduct.variants.find(
+          (variant) => {
+            const variantOptions =
+              this.getVariantOptions(
+                variant
+              );
 
-          return variant.options.every((value, index) => {
-            return (
-              String(value) === String(this.selectedOptions[index])
+            if (
+              variantOptions.length !==
+              this.selectedOptions.length
+            ) {
+              return false;
+            }
+
+            return variantOptions.every(
+              (value, index) =>
+                String(value) ===
+                String(
+                  this.selectedOptions[
+                    index
+                  ]
+                )
             );
-          });
-        }) || null
+          }
+        ) || null
       );
     }
 
-    updateVariant() {
-      if (!this.activeProduct) {
-        return;
-      }
+    updateSelectedVariant() {
+      const variant =
+        this.findSelectedVariant();
 
-      const variant = this.findSelectedVariant();
-      this.activeVariant = variant;
-
-      this.updateAllOptionStates();
+      this.currentVariant = variant;
 
       if (!variant) {
-        this.price.textContent = 'Unavailable';
+        if (this.priceElement) {
+          this.priceElement.textContent =
+            'Unavailable';
+        }
 
-        this.comparePrice.textContent = '';
-        this.comparePrice.hidden = true;
+        if (this.statusElement) {
+          this.statusElement.textContent =
+            'This option combination is unavailable.';
+        }
 
-        this.availability.textContent =
-          'This option combination is unavailable.';
+        if (this.addButton) {
+          this.addButton.disabled = true;
+        }
 
-        this.addButton.disabled = true;
-        this.addButton.textContent = 'Unavailable';
+        if (this.addLabel) {
+          this.addLabel.textContent =
+            'UNAVAILABLE';
+        }
 
-        this.updateImage(this.activeProduct.featuredImage);
+        this.updateProductImage(
+          this.getProductImage(
+            this.currentProduct
+          )
+        );
+
         return;
       }
 
-      this.price.textContent = variant.priceFormatted || '';
-
-      if (
-        variant.compareAtPrice &&
-        variant.compareAtPrice > variant.price &&
-        variant.compareAtPriceFormatted
-      ) {
-        this.comparePrice.textContent =
-          variant.compareAtPriceFormatted;
-        this.comparePrice.hidden = false;
-      } else {
-        this.comparePrice.textContent = '';
-        this.comparePrice.hidden = true;
+      if (this.priceElement) {
+        this.priceElement.textContent =
+          this.formatMoney(
+            variant.price
+          );
       }
 
-      if (variant.image) {
-        this.updateImage(variant.image);
-      } else {
-        this.updateImage(this.activeProduct.featuredImage);
-      }
+      const variantImage =
+        this.getVariantImage(
+          variant
+        );
+
+      this.updateProductImage(
+        variantImage ||
+          this.getProductImage(
+            this.currentProduct
+          )
+      );
 
       if (variant.available) {
-        this.availability.textContent = 'In stock';
-        this.addButton.disabled = this.isSubmitting;
+        if (this.statusElement) {
+          this.statusElement.textContent =
+            'In stock';
+        }
 
-        if (!this.isSubmitting) {
-          this.addButton.textContent = 'Add to cart';
+        if (this.addButton) {
+          this.addButton.disabled =
+            this.isSubmitting;
+        }
+
+        if (
+          this.addLabel &&
+          !this.isSubmitting
+        ) {
+          this.addLabel.textContent =
+            this.defaultAddLabel;
         }
       } else {
-        this.availability.textContent = 'Sold out';
-        this.addButton.disabled = true;
-        this.addButton.textContent = 'Sold out';
-      }
-    }
-
-    updateAllOptionStates() {
-      if (!this.optionsContainer) {
-        return;
-      }
-
-      this.activeProduct.options.forEach((option, index) => {
-        if (index === 0) {
-          this.updateOptionButtonStates(index);
+        if (this.statusElement) {
+          this.statusElement.textContent =
+            'Sold out';
         }
-      });
+
+        if (this.addButton) {
+          this.addButton.disabled = true;
+        }
+
+        if (this.addLabel) {
+          this.addLabel.textContent =
+            'SOLD OUT';
+        }
+      }
     }
 
-    updateImage(imageData) {
-      if (!this.image) {
-        return;
+    formatMoney(cents) {
+      const amount =
+        Number(cents || 0) / 100;
+
+      try {
+        return new Intl.NumberFormat(
+          document.documentElement.lang ||
+            'en',
+          {
+            style: 'currency',
+            currency: this.currency
+          }
+        ).format(amount);
+      } catch (error) {
+        return `${this.currency} ${amount.toFixed(
+          2
+        )}`;
+      }
+    }
+
+    qualifiesForBonus(variant) {
+      if (!variant) {
+        return false;
       }
 
-      if (!imageData || !imageData.src) {
-        this.image.removeAttribute('src');
-        this.image.alt = '';
-        return;
+      const values =
+        this.getVariantOptions(
+          variant
+        ).map((value) =>
+          String(value)
+            .trim()
+            .toLowerCase()
+        );
+
+      return (
+        values.includes('black') &&
+        values.includes('medium')
+      );
+    }
+
+    getBonusVariantId() {
+      const value =
+        this.root.dataset
+          .bonusVariantId;
+
+      if (!value) {
+        return null;
       }
 
-      this.image.src = imageData.src;
-      this.image.alt =
-        imageData.alt ||
-        (this.activeProduct ? this.activeProduct.title : '');
+      const id = Number(value);
 
-      if (imageData.width) {
-        this.image.width = Number(imageData.width);
+      return Number.isFinite(id)
+        ? id
+        : null;
+    }
+
+    getBonusProductId() {
+      const value =
+        this.root.dataset
+          .bonusProductId;
+
+      if (!value) {
+        return null;
       }
 
-      if (imageData.height) {
-        this.image.height = Number(imageData.height);
+      const id = Number(value);
+
+      return Number.isFinite(id)
+        ? id
+        : null;
+    }
+
+    getBonusProductTitle() {
+      return (
+        this.root.dataset
+          .bonusProductTitle ||
+        'Soft Winter Jacket'
+      );
+    }
+
+    bonusProductAvailable() {
+      return (
+        this.root.dataset
+          .bonusVariantAvailable ===
+        'true'
+      );
+    }
+
+    shouldAddBonusProduct() {
+      if (
+        !this.currentVariant ||
+        !this.currentProduct
+      ) {
+        return false;
       }
+
+      if (
+        !this.qualifiesForBonus(
+          this.currentVariant
+        )
+      ) {
+        return false;
+      }
+
+      const bonusVariantId =
+        this.getBonusVariantId();
+
+      if (!bonusVariantId) {
+        return false;
+      }
+
+      if (
+        !this.bonusProductAvailable()
+      ) {
+        return false;
+      }
+
+      const bonusProductId =
+        this.getBonusProductId();
+
+      /*
+       * Prevent Soft Winter Jacket
+       * adding itself as another line.
+       */
+      if (
+        bonusProductId &&
+        Number(
+          this.currentProduct.id
+        ) === bonusProductId
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+
+    buildCartItems() {
+      const items = [
+        {
+          id: this.currentVariant.id,
+          quantity: 1
+        }
+      ];
+
+      if (
+        this.shouldAddBonusProduct()
+      ) {
+        items.push({
+          id: this.getBonusVariantId(),
+          quantity: 1
+        });
+      }
+
+      return items;
     }
 
     async addToCart() {
-      const variant = this.activeVariant;
-
       if (
-        !variant ||
-        !variant.available ||
-        this.isSubmitting ||
-        !this.addButton
+        !this.currentVariant ||
+        !this.currentVariant.available ||
+        !this.currentProduct ||
+        this.isSubmitting
       ) {
         return;
       }
 
       this.isSubmitting = true;
-      this.addButton.disabled = true;
-      this.addButton.textContent = 'Adding…';
-      this.status.textContent = 'Adding item to cart…';
 
-      let requestSucceeded = false;
+      if (this.addButton) {
+        this.addButton.disabled = true;
+      }
+
+      if (this.addLabel) {
+        this.addLabel.textContent =
+          'ADDING...';
+      }
+
+      const addBonus =
+        this.shouldAddBonusProduct();
+
+      if (this.statusElement) {
+        if (addBonus) {
+          this.statusElement.textContent =
+            `Adding ${this.currentProduct.title} and ${this.getBonusProductTitle()} to your cart...`;
+        } else {
+          this.statusElement.textContent =
+            `Adding ${this.currentProduct.title} to your cart...`;
+        }
+      }
 
       try {
-        const shopifyRoot =
-          window.Shopify &&
-          window.Shopify.routes &&
-          window.Shopify.routes.root
-            ? window.Shopify.routes.root
-            : '/';
-
         const response = await fetch(
-          shopifyRoot + 'cart/add.js',
+          `${this.routesRoot}cart/add.js`,
           {
             method: 'POST',
+
             headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json'
+              'Content-Type':
+                'application/json',
+              Accept:
+                'application/json'
             },
+
             body: JSON.stringify({
-              items: [
-                {
-                  id: variant.id,
-                  quantity: 1
-                }
-              ]
+              items:
+                this.buildCartItems()
             })
           }
         );
@@ -574,62 +1137,251 @@
         let responseData = null;
 
         try {
-          responseData = await response.json();
-        } catch (parseError) {
+          responseData =
+            await response.json();
+        } catch (error) {
           responseData = null;
         }
 
         if (!response.ok) {
-          const errorMessage =
-            responseData &&
-            (responseData.description || responseData.message)
-              ? responseData.description || responseData.message
-              : 'The item could not be added to your cart.';
+          const message =
+            responseData?.description ||
+            responseData?.message ||
+            'The product could not be added to your cart.';
 
-          throw new Error(errorMessage);
+          throw new Error(message);
         }
 
-        requestSucceeded = true;
+        if (this.addLabel) {
+          this.addLabel.textContent =
+            'ADDED';
+        }
 
-        this.addButton.textContent = 'Added';
-        this.status.textContent = `${this.activeProduct.title} was added to your cart.`;
+        if (this.statusElement) {
+          if (addBonus) {
+            this.statusElement.textContent =
+              `${this.currentProduct.title} and ${this.getBonusProductTitle()} were added to your cart.`;
+          } else {
+            this.statusElement.textContent =
+              `${this.currentProduct.title} was added to your cart.`;
+          }
+        }
 
         document.dispatchEvent(
-          new CustomEvent('ee-test:cart-added', {
-            detail: responseData
-          })
+          new CustomEvent(
+            'ee-test:cart-added',
+            {
+              detail: responseData
+            }
+          )
         );
 
-        this.successTimer = window.setTimeout(() => {
-          this.successTimer = null;
+        window.setTimeout(() => {
+          if (
+            !this.isOpen ||
+            !this.currentVariant
+          ) {
+            return;
+          }
 
           if (
-            this.isOpen &&
-            this.activeVariant &&
-            this.activeVariant.available
+            this.currentVariant
+              .available
           ) {
-            this.addButton.disabled = false;
-            this.addButton.textContent = 'Add to cart';
+            if (this.addButton) {
+              this.addButton.disabled =
+                false;
+            }
+
+            if (this.addLabel) {
+              this.addLabel.textContent =
+                this.defaultAddLabel;
+            }
           }
         }, 1800);
       } catch (error) {
-        const message =
-          error instanceof Error && error.message
-            ? error.message
-            : 'Something went wrong. Please try again.';
+        console.error(
+          'Gift guide cart error:',
+          error
+        );
 
-        this.status.textContent = message;
-        this.addButton.textContent = 'Add to cart';
-      } finally {
-        this.isSubmitting = false;
+        if (this.statusElement) {
+          this.statusElement.textContent =
+            error instanceof Error &&
+            error.message
+              ? error.message
+              : 'Something went wrong. Please try again.';
+        }
 
         if (
-          !requestSucceeded &&
-          this.activeVariant &&
-          this.activeVariant.available
+          this.currentVariant &&
+          this.currentVariant.available
         ) {
-          this.addButton.disabled = false;
+          if (this.addButton) {
+            this.addButton.disabled =
+              false;
+          }
+
+          if (this.addLabel) {
+            this.addLabel.textContent =
+              this.defaultAddLabel;
+          }
         }
+      } finally {
+        this.isSubmitting = false;
+      }
+    }
+
+    showModal() {
+      if (!this.modal) {
+        return;
+      }
+
+      this.modal.hidden = false;
+
+      this.modal.setAttribute(
+        'aria-hidden',
+        'false'
+      );
+
+      this.isOpen = true;
+
+      this.bodyOverflowBeforeOpen =
+        document.body.style.overflow;
+
+      document.body.style.overflow =
+        'hidden';
+
+      window.requestAnimationFrame(
+        () => {
+          const closeButton =
+            this.modal.querySelector(
+              '.gift-guide-modal__close'
+            );
+
+          if (closeButton) {
+            closeButton.focus();
+          } else if (this.dialog) {
+            this.dialog.focus();
+          }
+        }
+      );
+    }
+
+    closeModal(
+      restoreFocus = true
+    ) {
+      if (!this.modal) {
+        return;
+      }
+
+      this.modal.hidden = true;
+
+      this.modal.setAttribute(
+        'aria-hidden',
+        'true'
+      );
+
+      this.isOpen = false;
+
+      document.body.style.overflow =
+        this.bodyOverflowBeforeOpen ||
+        '';
+
+      this.bodyOverflowBeforeOpen =
+        '';
+
+      const trigger =
+        this.currentTrigger;
+
+      this.currentProduct = null;
+      this.currentVariant = null;
+      this.selectedOptions = [];
+      this.currentTrigger = null;
+
+      if (this.statusElement) {
+        this.statusElement.textContent =
+          '';
+      }
+
+      if (
+        restoreFocus &&
+        trigger &&
+        trigger.isConnected
+      ) {
+        trigger.focus();
+      }
+    }
+
+    showLoading() {
+      if (this.dialog) {
+        this.dialog.setAttribute(
+          'aria-busy',
+          'true'
+        );
+      }
+
+      if (this.loadingElement) {
+        this.loadingElement.hidden =
+          false;
+      }
+
+      if (this.errorElement) {
+        this.errorElement.hidden =
+          true;
+      }
+
+      if (this.contentElement) {
+        this.contentElement.hidden =
+          true;
+      }
+    }
+
+    showContent() {
+      if (this.dialog) {
+        this.dialog.setAttribute(
+          'aria-busy',
+          'false'
+        );
+      }
+
+      if (this.loadingElement) {
+        this.loadingElement.hidden =
+          true;
+      }
+
+      if (this.errorElement) {
+        this.errorElement.hidden =
+          true;
+      }
+
+      if (this.contentElement) {
+        this.contentElement.hidden =
+          false;
+      }
+    }
+
+    showError() {
+      if (this.dialog) {
+        this.dialog.setAttribute(
+          'aria-busy',
+          'false'
+        );
+      }
+
+      if (this.loadingElement) {
+        this.loadingElement.hidden =
+          true;
+      }
+
+      if (this.contentElement) {
+        this.contentElement.hidden =
+          true;
+      }
+
+      if (this.errorElement) {
+        this.errorElement.hidden =
+          false;
       }
     }
 
@@ -638,35 +1390,45 @@
         return;
       }
 
-      const focusableElements = Array.from(
-        this.dialog.querySelectorAll(
-          [
-            'button:not([disabled])',
-            'select:not([disabled])',
-            'a[href]',
-            'input:not([disabled])',
-            '[tabindex]:not([tabindex="-1"])'
-          ].join(',')
-        )
-      ).filter((element) => {
-        return (
-          !element.hasAttribute('hidden') &&
-          element.getClientRects().length > 0
-        );
-      });
+      const focusableSelector = [
+        'a[href]',
+        'button:not([disabled])',
+        'select:not([disabled])',
+        'input:not([disabled])',
+        'textarea:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])'
+      ].join(',');
 
-      if (focusableElements.length === 0) {
+      const focusable =
+        Array.from(
+          this.dialog.querySelectorAll(
+            focusableSelector
+          )
+        ).filter((element) => {
+          return (
+            element.getClientRects()
+              .length > 0
+          );
+        });
+
+      if (!focusable.length) {
         event.preventDefault();
         this.dialog.focus();
         return;
       }
 
-      const first = focusableElements[0];
-      const last = focusableElements[focusableElements.length - 1];
+      const first =
+        focusable[0];
+
+      const last =
+        focusable[
+          focusable.length - 1
+        ];
 
       if (
         event.shiftKey &&
-        document.activeElement === first
+        document.activeElement ===
+          first
       ) {
         event.preventDefault();
         last.focus();
@@ -675,26 +1437,99 @@
 
       if (
         !event.shiftKey &&
-        document.activeElement === last
+        document.activeElement ===
+          last
       ) {
         event.preventDefault();
         first.focus();
       }
     }
-
-    lockBody() {
-      this.previousBodyOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-    }
-
-    unlockBody() {
-      document.body.style.overflow =
-        this.previousBodyOverflow || '';
-
-      this.previousBodyOverflow = '';
-    }
   }
 
-  customElements.define(ELEMENT_NAME, EETestProductGrid);
-})();
+  function initGrid(root) {
+    if (
+      !root ||
+      instances.has(root)
+    ) {
+      return;
+    }
 
+    const instance =
+      new GiftGuideGrid(root);
+
+    instances.set(
+      root,
+      instance
+    );
+  }
+
+  function destroyGrid(root) {
+    const instance =
+      instances.get(root);
+
+    if (!instance) {
+      return;
+    }
+
+    instance.destroy();
+    instances.delete(root);
+  }
+
+  function initAll(scope = document) {
+    if (
+      scope.matches &&
+      scope.matches(SELECTORS.grid)
+    ) {
+      initGrid(scope);
+    }
+
+    scope
+      .querySelectorAll?.(
+        SELECTORS.grid
+      )
+      .forEach(initGrid);
+  }
+
+  if (
+    document.readyState ===
+    'loading'
+  ) {
+    document.addEventListener(
+      'DOMContentLoaded',
+      () => initAll(document),
+      {
+        once: true
+      }
+    );
+  } else {
+    initAll(document);
+  }
+
+  document.addEventListener(
+    'shopify:section:load',
+    (event) => {
+      initAll(event.target);
+    }
+  );
+
+  document.addEventListener(
+    'shopify:section:unload',
+    (event) => {
+      if (
+        event.target.matches?.(
+          SELECTORS.grid
+        )
+      ) {
+        destroyGrid(
+          event.target
+        );
+      }
+
+      event.target
+        .querySelectorAll?.(
+          SELECTORS.grid
+        )
+        .forEach(destroyGrid);
+    }
+  );
+})();

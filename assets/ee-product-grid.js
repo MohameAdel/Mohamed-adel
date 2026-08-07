@@ -1533,3 +1533,11 @@
     }
   );
 })();
+// inside showModal()
+this.modal.classList.add(
+  'is-open'
+);
+// inside closeModal()
+this.modal.classList.remove(
+  'is-open'
+);

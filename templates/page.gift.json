@@ -56,10 +56,94 @@
         "announcement_vertical_padding": 9,
         "announcement_uppercase": true
       }
+    },
+    "ee_product_grid_wC9P3g": {
+      "type": "ee-product-grid",
+      "blocks": {
+        "product_GcY9RA": {
+          "type": "product",
+          "settings": {
+            "product": "",
+            "desktop_x": 50,
+            "desktop_y": 50,
+            "mobile_x": 50,
+            "mobile_y": 50,
+            "hotspot_label": ""
+          }
+        },
+        "product_f8Ymgz": {
+          "type": "product",
+          "settings": {
+            "product": "",
+            "desktop_x": 50,
+            "desktop_y": 50,
+            "mobile_x": 50,
+            "mobile_y": 50,
+            "hotspot_label": ""
+          }
+        },
+        "product_BH3UTn": {
+          "type": "product",
+          "settings": {
+            "product": "",
+            "desktop_x": 50,
+            "desktop_y": 50,
+            "mobile_x": 50,
+            "mobile_y": 50,
+            "hotspot_label": ""
+          }
+        },
+        "product_rmWUFb": {
+          "type": "product",
+          "settings": {
+            "product": "",
+            "desktop_x": 50,
+            "desktop_y": 50,
+            "mobile_x": 50,
+            "mobile_y": 50,
+            "hotspot_label": ""
+          }
+        },
+        "product_DPMaNG": {
+          "type": "product",
+          "settings": {
+            "product": "",
+            "desktop_x": 50,
+            "desktop_y": 50,
+            "mobile_x": 50,
+            "mobile_y": 50,
+            "hotspot_label": ""
+          }
+        },
+        "product_CwJHik": {
+          "type": "product",
+          "settings": {
+            "product": "",
+            "desktop_x": 50,
+            "desktop_y": 50,
+            "mobile_x": 50,
+            "mobile_y": 50,
+            "hotspot_label": ""
+          }
+        }
+      },
+      "block_order": [
+        "product_GcY9RA",
+        "product_f8Ymgz",
+        "product_BH3UTn",
+        "product_rmWUFb",
+        "product_DPMaNG",
+        "product_CwJHik"
+      ],
+      "name": "EE product grid",
+      "settings": {
+        "heading": "Tisso vison in the wild"
+      }
     }
   },
   "order": [
     "main",
-    "ee_gift_banner_YeTVgW"
+    "ee_gift_banner_YeTVgW",
+    "ee_product_grid_wC9P3g"
   ]
 }

@@ -17,7 +17,7 @@
     'soft-winter-jacket';
 
   const QUALIFYING_VALUES = [
-    'Black',
+    'black',
     'medium'
   ];
 

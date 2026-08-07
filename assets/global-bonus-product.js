@@ -17,7 +17,7 @@
     'soft-winter-jacket';
 
   const QUALIFYING_VALUES = [
-    'black',
+    'Black',
     'medium'
   ];
 
@@ -54,19 +54,26 @@
    * from a Shopify cart item.
    */
   function getCartItemOptionValues(item) {
-    if (
-      !item ||
-      !Array.isArray(item.options_with_values)
-    ) {
-      return [];
-    }
+  if (!item) {
+    return [];
+  }
 
+  if (Array.isArray(item.variant_options)) {
+    return item.variant_options
+      .map(normalizeValue)
+      .filter(Boolean);
+  }
+
+  if (Array.isArray(item.options_with_values)) {
     return item.options_with_values
       .map((option) =>
         normalizeValue(option?.value)
       )
       .filter(Boolean);
   }
+
+  return [];
+}
 
   /*
    * Check:

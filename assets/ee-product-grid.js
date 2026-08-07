@@ -1245,7 +1245,7 @@
       );
 
       this.isOpen = true;
-
+      this.modal.classList.add('is-open');
       this.bodyOverflowBeforeOpen =
         document.body.style.overflow;
 
@@ -1274,7 +1274,7 @@
       if (!this.modal) {
         return;
       }
-
+      this.modal.classList.remove('is-open');
       this.modal.hidden = true;
 
       this.modal.setAttribute(
@@ -1533,11 +1533,3 @@
     }
   );
 })();
-// inside showModal()
-this.modal.classList.add(
-  'is-open'
-);
-// inside closeModal()
-this.modal.classList.remove(
-  'is-open'
-);

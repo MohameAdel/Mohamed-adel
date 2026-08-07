@@ -80,19 +80,66 @@
    * Does this cart item contain
    * BOTH Black and Medium?
    */
-  function qualifiesForBonus(item) {
-    if (!item) {
-      return false;
-    }
+ function qualifiesForBonus(item) {
+  if (!item) {
+    return false;
+  }
 
-    const values =
-      getCartItemOptionValues(item);
+  if (
+    Array.isArray(item.options_with_values)
+  ) {
+    const options = {};
 
-    return QUALIFYING_VALUES.every(
-      (requiredValue) =>
-        values.includes(requiredValue)
+    item.options_with_values.forEach(
+      (option) => {
+        const name =
+          normalizeValue(option?.name);
+
+        const value =
+          normalizeValue(option?.value);
+
+        if (name) {
+          options[name] = value;
+        }
+      }
+    );
+
+    const color =
+      options.color ||
+      options.colour ||
+      '';
+
+    const size =
+      options.size ||
+      '';
+
+    return (
+      color === 'black' &&
+      (
+        size === 'm' ||
+        size === 'medium'
+      )
     );
   }
+
+  if (
+    Array.isArray(item.variant_options)
+  ) {
+    const values =
+      item.variant_options
+        .map(normalizeValue);
+
+    return (
+      values.includes('black') &&
+      (
+        values.includes('m') ||
+        values.includes('medium')
+      )
+    );
+  }
+
+  return false;
+}
 
   /*
    * Fetch Soft Winter Jacket product data.

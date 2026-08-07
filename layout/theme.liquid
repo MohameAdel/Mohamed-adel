@@ -330,7 +330,7 @@
       {%- render 'cart-drawer' -%}
     {%- endif -%}
 
-    {% unless template.suffix == 'gift-guide' %}
+    {% unless template.suffix == 'gift' %}
   {% sections 'header-group' %}
 {% endunless %}
 
@@ -344,7 +344,7 @@
       {{ content_for_layout }}
     </main>
 
-{% unless template.suffix == 'gift-guide' %}
+{% unless template.suffix == 'gift' %}
   {% sections 'footer-group' %}
 {% endunless %}
     <ul hidden>

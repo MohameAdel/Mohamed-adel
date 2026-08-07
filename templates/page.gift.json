@@ -64,66 +64,60 @@
           "type": "product",
           "settings": {
             "product": "black-leather-bag",
-            "desktop_x": 50,
-            "desktop_y": 50,
-            "mobile_x": 50,
-            "mobile_y": 50,
-            "hotspot_label": ""
+            "hotspot_x": 63,
+            "hotspot_y": 56,
+            "hotspot_mobile_x": 69,
+            "hotspot_mobile_y": 18
           }
         },
         "product_f8Ymgz": {
           "type": "product",
           "settings": {
             "product": "blue-silk-tuxedo",
-            "desktop_x": 50,
-            "desktop_y": 50,
-            "mobile_x": 50,
-            "mobile_y": 50,
-            "hotspot_label": ""
+            "hotspot_x": 84,
+            "hotspot_y": 52,
+            "hotspot_mobile_x": 70,
+            "hotspot_mobile_y": 19
           }
         },
         "product_BH3UTn": {
           "type": "product",
           "settings": {
             "product": "chequered-red-shirt",
-            "desktop_x": 50,
-            "desktop_y": 50,
-            "mobile_x": 50,
-            "mobile_y": 50,
-            "hotspot_label": ""
+            "hotspot_x": 64,
+            "hotspot_y": 26,
+            "hotspot_mobile_x": 67,
+            "hotspot_mobile_y": 19
           }
         },
         "product_rmWUFb": {
           "type": "product",
           "settings": {
             "product": "classic-leather-jacket",
-            "desktop_x": 50,
-            "desktop_y": 50,
-            "mobile_x": 50,
-            "mobile_y": 50,
-            "hotspot_label": ""
+            "hotspot_x": 72,
+            "hotspot_y": 22,
+            "hotspot_mobile_x": 70,
+            "hotspot_mobile_y": 19
           }
         },
         "product_DPMaNG": {
           "type": "product",
           "settings": {
             "product": "classic-varsity-top",
-            "desktop_x": 50,
-            "desktop_y": 50,
-            "mobile_x": 50,
-            "mobile_y": 50,
-            "hotspot_label": ""
+            "hotspot_x": 50,
+            "hotspot_y": 27,
+            "hotspot_mobile_x": 67,
+            "hotspot_mobile_y": 18
           }
         },
         "product_CwJHik": {
           "type": "product",
           "settings": {
             "product": "dark-denim-top",
-            "desktop_x": 50,
-            "desktop_y": 50,
-            "mobile_x": 50,
-            "mobile_y": 50,
-            "hotspot_label": ""
+            "hotspot_x": 78,
+            "hotspot_y": 42,
+            "hotspot_mobile_x": 70,
+            "hotspot_mobile_y": 19
           }
         }
       },
@@ -137,7 +131,28 @@
       ],
       "name": "EE product grid",
       "settings": {
-        "heading": "Tisso vison in the wild"
+        "heading": "Tisso vison in the wild",
+        "max_width": 1380,
+        "desktop_gap": 24,
+        "mobile_gap": 4,
+        "padding_top": 48,
+        "padding_bottom": 80,
+        "background_color": "#ffffff",
+        "heading_color": "#000000",
+        "modal_loading_text": "Loading product...",
+        "modal_error_text": "Product details could not be loaded.",
+        "modal_button_label": "ADD TO CART",
+        "modal_width": 500,
+        "modal_overlay_color": "#000000",
+        "modal_overlay_opacity": 50,
+        "modal_background_color": "#ffffff",
+        "modal_text_color": "#000000",
+        "modal_muted_color": "#333333",
+        "modal_border_color": "#000000",
+        "modal_button_background": "#000000",
+        "modal_button_text": "#ffffff",
+        "modal_button_disabled_background": "#b5b5b5",
+        "modal_focus_color": "#000000"
       }
     }
   },

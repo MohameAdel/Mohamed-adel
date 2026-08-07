@@ -603,7 +603,15 @@
               index
             );
 
-          if (index === 0) {
+          const normalizedName =
+            String(optionName)
+              .trim()
+              .toLowerCase();
+
+          if (
+            normalizedName === 'color' ||
+            normalizedName === 'colour'
+          ) {
             this.renderFirstOption(
               optionName,
               values,
@@ -647,7 +655,7 @@
         document.createElement('div');
 
       valuesWrapper.className =
-        'gift-guide-modal__option-values';
+        'gift-guide-modal__color-list';
 
       values.forEach((value) => {
         const button =
@@ -658,7 +666,7 @@
         button.type = 'button';
 
         button.className =
-          'gift-guide-modal__option-button';
+          'gift-guide-modal__color-option';
 
         button.dataset.giftOptionButton =
           '';
@@ -669,13 +677,15 @@
         button.dataset.optionValue =
           String(value);
 
-        button.textContent =
-          String(value);
-
         const selected =
           String(
             this.selectedOptions[index]
           ) === String(value);
+
+        button.classList.toggle(
+          'is-selected',
+          selected
+        );
 
         button.setAttribute(
           'aria-pressed',
@@ -683,6 +693,27 @@
             ? 'true'
             : 'false'
         );
+
+        const swatch =
+          document.createElement('span');
+
+        swatch.className =
+          'gift-guide-modal__color-swatch';
+
+        swatch.style.backgroundColor =
+          String(value);
+
+        const colorName =
+          document.createElement('span');
+
+        colorName.className =
+          'gift-guide-modal__color-name';
+
+        colorName.textContent =
+          String(value);
+
+        button.appendChild(swatch);
+        button.appendChild(colorName);
 
         valuesWrapper.appendChild(
           button
@@ -734,7 +765,7 @@
       select.id = selectId;
 
       select.className =
-        'gift-guide-modal__option-select';
+        'gift-guide-modal__select';
 
       select.dataset.giftOptionSelect =
         '';
@@ -797,6 +828,11 @@
           selected
             ? 'true'
             : 'false'
+        );
+
+        button.classList.toggle(
+          'is-selected',
+          selected
         );
       });
     }
@@ -1239,13 +1275,17 @@
 
       this.modal.hidden = false;
 
+      this.modal.classList.add(
+        'is-open'
+      );
+
       this.modal.setAttribute(
         'aria-hidden',
         'false'
       );
 
       this.isOpen = true;
-      this.modal.classList.add('is-open');
+
       this.bodyOverflowBeforeOpen =
         document.body.style.overflow;
 
@@ -1274,7 +1314,11 @@
       if (!this.modal) {
         return;
       }
-      this.modal.classList.remove('is-open');
+
+      this.modal.classList.remove(
+        'is-open'
+      );
+
       this.modal.hidden = true;
 
       this.modal.setAttribute(
